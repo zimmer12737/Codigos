@@ -1,0 +1,243 @@
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Scanner;
+import java.util.stream.Collectors;
+
+// Clase principal con CRUD
+public class CRUD_Vehiculos_Consola {
+
+    // Variable global principal (ArrayList) para almacenar los vehículos
+    private static ArrayList<Vehiculo> flota = new ArrayList<>();
+
+    // Scanner global
+    private static Scanner scanner = new Scanner(System.in);
+
+    // Método principal
+    public static void main(String[] args) {
+        // Lambda Mantenible para calcular costo de mantenimiento aproximado
+        Mantenible costoPorKm = (v) -> 0.05 * v.getKilometraje();
+
+        // Pre-carga de datos (manejo de excepciones)
+        try {
+            flota.add(new Auto("Toyota","Corolla",2018,"ABC123", 45000, 4));
+            flota.add(new Camion("Volvo","FH",2015,"TRU456", 150000, 12.0));
+            flota.add(new Moto("Honda","CBR",2020,"MOT789", 8000, false));
+        } catch (PatenteInvalidaException e) {
+            System.out.println("Error al precargar: " + e.getMessage());
+        }
+
+        boolean salir = false;
+        do {
+            mostrarMenu();
+            String opcion = scanner.nextLine();
+            switch (opcion) {
+                case "1": crearVehiculo(); break;
+                case "2": listarVehiculos(); break;
+                case "3": actualizarVehiculo(); break;
+                case "4": eliminarVehiculo(); break;
+                case "5": buscarVehiculoPorPatenteRecursivo(); break;
+                case "6": mostrarEstadisticasRecursivas(); break;
+                case "7": operacionesConLambdas(costoPorKm); break;
+                case "0": salir = true; break;
+                default:
+                    System.out.println("Opción inválida. Intente nuevamente.");
+            }
+        } while (!salir);
+
+        System.out.println("Saliendo del sistema. ¡Hasta luego!");
+    }
+
+    private static void mostrarMenu() {
+        System.out.println("\n=== Gestión de Flota - Empresa Logística XYZ ===");
+        System.out.println("1. Crear vehículo");
+        System.out.println("2. Listar vehículos");
+        System.out.println("3. Actualizar vehículo");
+        System.out.println("4. Eliminar vehículo");
+        System.out.println("5. Buscar vehículo por patente (recursivo)");
+        System.out.println("6. Estadísticas recursivas (ej: contar por año)");
+        System.out.println("7. Operaciones con lambdas (filter, removeIf, anyMatch, forEach)");
+        System.out.println("0. Salir");
+        System.out.print("Seleccione una opción: ");
+    }
+
+    // Crear vehículo
+    private static void crearVehiculo() {
+        try {
+            System.out.print("Tipo (Auto/Camion/Moto): ");
+            String tipo = scanner.nextLine().trim();
+            System.out.print("Marca: "); String marca = scanner.nextLine();
+            System.out.print("Modelo: "); String modelo = scanner.nextLine();
+            System.out.print("Año: "); int anio = Integer.parseInt(scanner.nextLine());
+            System.out.print("Patente (ej ABC123): "); String patente = scanner.nextLine();
+            System.out.print("Kilometraje: "); double km = Double.parseDouble(scanner.nextLine());
+
+            Vehiculo v = null;
+            if (tipo.equalsIgnoreCase("Auto")) {
+                System.out.print("Puertas: "); int puertas = Integer.parseInt(scanner.nextLine());
+                v = new Auto(marca, modelo, anio, patente, km, puertas);
+            } else if (tipo.equalsIgnoreCase("Camion")) {
+                System.out.print("Capacidad toneladas: "); double cap = Double.parseDouble(scanner.nextLine());
+                v = new Camion(marca, modelo, anio, patente, km, cap);
+            } else if (tipo.equalsIgnoreCase("Moto")) {
+                System.out.print("Tiene sidecar? (si/no): "); String s = scanner.nextLine();
+                boolean side = s.equalsIgnoreCase("si");
+                v = new Moto(marca, modelo, anio, patente, km, side);
+            } else {
+                System.out.println("Tipo no reconocido, se creará como Vehículo genérico.");
+                v = new Vehiculo(marca, modelo, anio, patente, tipo, km);
+            }
+
+            // Verificar duplicados por patente
+            if (flota.contains(v)) {
+                System.out.println("Ya existe un vehículo con esa patente. Operación cancelada.");
+                return;
+            }
+            flota.add(v);
+            System.out.println("Vehículo agregado con éxito.");
+        } catch (NumberFormatException nfe) {
+            System.out.println("Entrada numérica inválida: " + nfe.getMessage());
+        } catch (PatenteInvalidaException pie) {
+            System.out.println("Patente inválida: " + pie.getMessage());
+        } catch (Exception e) {
+            System.out.println("Error al crear vehículo: " + e.getMessage());
+        } finally {
+            System.out.println("Operación crear finalizada.");
+        }
+    }
+
+    // Listar vehículos
+    private static void listarVehiculos() {
+        if (flota.isEmpty()) {
+            System.out.println("No hay vehículos registrados.");
+            return;
+        }
+        System.out.println("\nListado de vehículos:");
+        // for con índice
+        for (int i = 0; i < flota.size(); i++) {
+            System.out.printf("%d) %s\n", i+1, flota.get(i).descripcion());
+        }
+    }
+
+    // Actualizar vehículo (demuestra modificación por referencia)
+    private static void actualizarVehiculo() {
+        System.out.print("Ingrese la patente del vehículo a actualizar: ");
+        String p = scanner.nextLine().toUpperCase();
+        Vehiculo v = buscarVehiculoPorPatente(p);
+        if (v == null) {
+            System.out.println("No se encontró vehículo con esa patente.");
+            return;
+        }
+        System.out.println("Vehículo encontrado: " + v.descripcion());
+        System.out.print("Nuevo kilometraje (enter para omitir): ");
+        String entrada = scanner.nextLine();
+        if (!entrada.isEmpty()) {
+            try {
+                double nuevoKm = Double.parseDouble(entrada);
+                // Método que modifica el objeto (paso por referencia)
+                incrementarKilometraje(v, nuevoKm - v.getKilometraje());
+                System.out.println("Kilometraje actualizado.");
+            } catch (NumberFormatException e) {
+                System.out.println("Valor numérico inválido.");
+            }
+        }
+        System.out.print("Desea cambiar el modelo? (si/no): ");
+        if (scanner.nextLine().equalsIgnoreCase("si")) {
+            System.out.print("Nuevo modelo: ");
+            String modelo = scanner.nextLine();
+            v.setModelo(modelo);
+            System.out.println("Modelo actualizado.");
+        }
+    }
+
+    // Método que demuestra modificación por referencia
+    private static void incrementarKilometraje(Vehiculo v, double incremento) {
+        if (incremento <= 0) return;
+        double kmActual = v.getKilometraje();
+        v.setKilometraje(kmActual + incremento);
+    }
+
+    // Eliminar vehículo
+    private static void eliminarVehiculo() {
+        System.out.print("Ingrese la patente a eliminar: ");
+        String p = scanner.nextLine().toUpperCase();
+        boolean removed = flota.removeIf(v -> v.getPatente().equalsIgnoreCase(p)); // lambda removeIf
+        if (removed) System.out.println("Vehículo eliminado."); else System.out.println("No se encontró la patente.");
+    }
+
+    // Buscar vehículo por patente (iterativo)
+    private static Vehiculo buscarVehiculoPorPatente(String patente) {
+        for (Vehiculo v : flota) {
+            if (v.getPatente().equalsIgnoreCase(patente)) return v;
+        }
+        return null;
+    }
+
+    // Buscar por patente recursivo (usa la lista global)
+    private static void buscarVehiculoPorPatenteRecursivo() {
+        System.out.print("Ingrese la patente a buscar (recursivo): ");
+        String p = scanner.nextLine().toUpperCase();
+        Vehiculo resultado = buscarRecursivo(flota, p, 0);
+        if (resultado != null) System.out.println("Encontrado: " + resultado.descripcion());
+        else System.out.println("No se encontró la patente.");
+    }
+
+    private static Vehiculo buscarRecursivo(List<Vehiculo> lista, String patente, int index) {
+        if (index >= lista.size()) return null;
+        if (lista.get(index).getPatente().equalsIgnoreCase(patente)) return lista.get(index);
+        return buscarRecursivo(lista, patente, index+1);
+    }
+
+    // Estadísticas recursivas: contar vehículos anteriores a cierto año
+    private static void mostrarEstadisticasRecursivas() {
+        System.out.print("Contar vehículos anteriores a qué año?: ");
+        try {
+            int year = Integer.parseInt(scanner.nextLine());
+            int cantidad = contarAnteriorA(flota, year, 0);
+            System.out.printf("Hay %d vehículo(s) con año < %d\n", cantidad, year);
+        } catch (NumberFormatException e) {
+            System.out.println("Año inválido.");
+        }
+    }
+
+    private static int contarAnteriorA(List<Vehiculo> lista, int year, int index) {
+        if (index >= lista.size()) return 0;
+        int suma = (lista.get(index).getAnio() < year) ? 1 : 0;
+        return suma + contarAnteriorA(lista, year, index+1);
+    }
+
+    // Operaciones que demuestran lambdas y streams
+    private static void operacionesConLambdas(Mantenible mantenible) {
+        System.out.println("\nOperaciones con lambdas y streams:");
+        // forEach
+        System.out.println("Listado breve (forEach):");
+        flota.forEach(v -> System.out.println(v.getPatente() + " - " + v.getTipo()));
+
+        // filter: mostrar solo camiones
+        List<Vehiculo> camiones = flota.stream().filter(v -> v.getTipo().equalsIgnoreCase("Camion")).collect(Collectors.toList());
+        System.out.println("Camiones en flota: " + camiones.size());
+
+        // anyMatch: existe una moto
+        boolean hayMoto = flota.stream().anyMatch(v -> v.getTipo().equalsIgnoreCase("Moto"));
+        System.out.println("¿Hay alguna moto? " + (hayMoto ? "Sí" : "No"));
+
+        // removeIf: eliminar vehículos con km > 300000 (ejemplo)
+        System.out.print("Desea eliminar vehículos con km > 300000? (si/no): ");
+        String resp = scanner.nextLine();
+        if (resp.equalsIgnoreCase("si")) {
+            int antes = flota.size();
+            flota.removeIf(v -> v.getKilometraje() > 300000); // lambda removeIf
+            System.out.println("Eliminados: " + (antes - flota.size()));
+        }
+
+        // Uso de la interfaz Mantenible
+        System.out.println("Costos estimados de mantenimiento (según km):");
+        flota.forEach(v -> System.out.printf("%s -> %.2f\n", v.getPatente(), mantenible.calcularCostoMantenimiento(v)));
+
+        // Uso de contains, substring, toUpperCase, equalsIgnoreCase
+        System.out.print("Buscar por fragmento en modelo (contains): ");
+        String frag = scanner.nextLine();
+        List<Vehiculo> encontrados = flota.stream().filter(v -> v.getModelo().toUpperCase().contains(frag.toUpperCase())).collect(Collectors.toList());
+        System.out.println("Encontrados: " + encontrados.size());
+        encontrados.forEach(v -> System.out.println(v.descripcion()));
+    }
+}
