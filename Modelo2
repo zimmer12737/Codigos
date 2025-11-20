@@ -1,0 +1,417 @@
+// Contiene la lógica base para cualquier vehículo de la flota.
+
+import java.util.Objects;
+
+public class Vehiculo {
+    [cite_start]// Atributos privados (Encapsulamiento) [cite: 20]
+    private String marca; [cite_start]// [cite: 28]
+    private int modelo; [cite_start]// [cite: 29]
+    private String patente; [cite_start]// [cite: 30]
+    private int tipo; [cite_start]// [cite: 31]
+    private int kilometraje; [cite_start]// [cite: 32]
+
+    [cite_start]// Constructor Parametrizado [cite: 19]
+    public Vehiculo(String marca, int modelo, String patente, int tipo, int kilometraje) {
+        this.marca = marca;
+        this.modelo = modelo;
+        this.patente = patente.toUpperCase(); [cite_start]// Usa toUpperCase() [cite: 18]
+        this.tipo = tipo;
+        this.kilometraje = kilometraje;
+    }
+
+    [cite_start]// Getters y Setters [cite: 20]
+    public String getMarca() {
+        return marca;
+    }
+
+    public void setMarca(String marca) {
+        this.marca = marca;
+    }
+
+    public int getModelo() {
+        return modelo;
+    }
+
+    public void setModelo(int modelo) {
+        this.modelo = modelo;
+    }
+
+    public String getPatente() {
+        return patente;
+    }
+
+    public void setPatente(String patente) {
+        this.patente = patente.toUpperCase();
+    }
+
+    public int getTipo() {
+        return tipo;
+    }
+
+    public void setTipo(int tipo) {
+        this.tipo = tipo;
+    }
+
+    public int getKilometraje() {
+        return kilometraje;
+    }
+
+    public void setKilometraje(int kilometraje) {
+        this.kilometraje = kilometraje;
+    }
+
+    [cite_start]// Método Sobrecargado 1/2 [cite: 26]
+    public void mostrarDetalle() {
+        System.out.printf("  Marca: %s, Modelo: %d, Patente: %s\n", marca, modelo, patente);
+    }
+
+    [cite_start]// Método Sobrecargado 2/2 - Añade el tipo de vehículo [cite: 26]
+    public void mostrarDetalle(String prefijo) {
+        System.out.printf("%s - Marca: %s, Modelo: %d, Patente: %s\n", prefijo, marca, modelo, patente);
+    }
+    
+    // Método a ser sobreescrito en las subclases
+    public double calcularCostoMantenimiento() {
+        // Costo base genérico
+        return 5000.0;
+    }
+
+    [cite_start]// Redefinir equals() y hashCode() para usar la Patente como identificador [cite: 22]
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        Vehiculo vehiculo = (Vehiculo) o;
+        // La comparación de patentes es la clave
+        return patente.equals(vehiculo.patente); [cite_start]// [cite: 18]
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(patente);
+    }
+}
+ ------------------------------------------------------------------
+
+public class Auto extends Vehiculo {
+    private int cantPuertas; [cite_start]// [cite: 35]
+
+    public Auto(String marca, int modelo, String patente, int tipo, int kilometraje, int cantPuertas) {
+        super(marca, modelo, patente, tipo, kilometraje);
+        this.cantPuertas = cantPuertas;
+    }
+
+    public int getCantPuertas() {
+        return cantPuertas;
+    }
+
+    public void setCantPuertas(int cantPuertas) {
+        this.cantPuertas = cantPuertas;
+    }
+
+    [cite_start]// Sobreescribir un método de Vehiculo [cite: 26]
+    @Override
+    public double calcularCostoMantenimiento() {
+        // Costo base + un extra por número de puertas
+        return super.calcularCostoMantenimiento() + (cantPuertas * 500);
+    }
+}
+
+-----------------------------------------------------------------
+
+public class Colectivo extends Vehiculo {
+    private int cantAsientos; [cite_start]// [cite: 38]
+
+    public Colectivo(String marca, int modelo, String patente, int tipo, int kilometraje, int cantAsientos) {
+        super(marca, modelo, patente, tipo, kilometraje);
+        this.cantAsientos = cantAsientos;
+    }
+
+    public int getCantAsientos() {
+        return cantAsientos;
+    }
+
+    public void setCantAsientos(int cantAsientos) {
+        this.cantAsientos = cantAsientos;
+    }
+
+    [cite_start]// Sobreescribir un método de Vehiculo [cite: 26]
+    @Override
+    public double calcularCostoMantenimiento() {
+        // Mantenimiento alto + un extra por número de asientos
+        return 15000.0 + (cantAsientos * 100);
+    }
+}
+
+--------------------------------------------------------------------
+
+[cite_start]// Excepción creada por el usuario [cite: 25]
+
+public class PatenteInvalidaException extends Exception {
+    public PatenteInvalidaException(String mensaje) {
+        super(mensaje);
+    }
+}
+
+--------------------------------------------------------------------
+
+// Archivo: SistemaAdministracionVehiculos.java
+// Sistema de Administración de Vehículos (CRUD por consola)
+
+import java.util.ArrayList; [cite_start]// [cite: 23]
+import java.util.Scanner; [cite_start]// [cite: 17]
+import java.util.stream.Collectors;
+
+public class SistemaAdministracionVehiculos {
+
+    /*
+     * JUSTIFICACIÓN DEL CONTEXTO:
+     * El contexto elegido es "Flota de Vehículos de una Empresa de Logística"
+     * [cite_start]El sistema administra los vehículos de la flota para seguimiento y mantenimiento. [cite: 6]
+     */
+    
+    [cite_start]// Variable Global Justificada: El ArrayList principal para el CRUD [cite: 11, 23]
+    private static ArrayList<Vehiculo> listadoVehiculos = new ArrayList<>();
+    
+    [cite_start]// Objeto Scanner global para simplificar la lectura de datos [cite: 17]
+    private static Scanner scanner = new Scanner(System.in); 
+
+    // ==============================================================================
+    [cite_start]// Métodos Obligatorios (Al menos 5) [cite: 10]
+    // ==============================================================================
+
+    /**
+     * Método 1: Crear un nuevo vehículo.
+     */
+    [cite_start]public static void crearVehiculo() { // [cite: 10]
+        System.out.println("\n--- CREAR VEHÍCULO ---");
+        System.out.print("Ingrese Marca: ");
+        String marca = scanner.nextLine();
+        
+        System.out.print("Ingrese Patente (3 letras 3 números EJ: AAA111): ");
+        String patente = scanner.nextLine();
+
+        [cite_start]// Manejo de Excepciones: try/catch para PatenteInvalidaException [cite: 25]
+        try {
+            [cite_start]if (patente == null || patente.length() != 6 || !patente.contains("")) { // contains() [cite: 18]
+                throw new PatenteInvalidaException("La patente debe tener 6 caracteres.");
+            }
+            if (buscarVehiculo(patente) != null) {
+                 throw new PatenteInvalidaException("ERROR: La patente ya está registrada.");
+            }
+
+            // Datos comunes
+            System.out.print("Ingrese Modelo (año): ");
+            int modelo = Integer.parseInt(scanner.nextLine());
+            System.out.print("Ingrese Kilometraje (int): ");
+            int km = Integer.parseInt(scanner.nextLine());
+            
+            [cite_start]// Ciclo do-while para elegir Tipo (para forzar al menos una iteración) [cite: 17]
+            int tipo;
+            do {
+                System.out.print("Ingrese Tipo (1-Auto, 2-Moto, 3-Colectivo): "); [cite_start]// [cite: 31]
+                tipo = Integer.parseInt(scanner.nextLine());
+            } while (tipo < 1 || tipo > 3);
+            
+            Vehiculo nuevoVehiculo = null;
+
+            [cite_start]// Uso de switch para la creación [cite: 17]
+            switch (tipo) {
+                case 1:
+                    System.out.print("Ingrese Cantidad de Puertas: "); [cite_start]// [cite: 35]
+                    int puertas = Integer.parseInt(scanner.nextLine());
+                    nuevoVehiculo = new Auto(marca, modelo, patente, tipo, km, puertas);
+                    break;
+                case 2:
+                    nuevoVehiculo = new Moto(marca, modelo, patente, tipo, km);
+                    break;
+                case 3:
+                    System.out.print("Ingrese Cantidad de Asientos: "); [cite_start]// [cite: 38]
+                    int asientos = Integer.parseInt(scanner.nextLine());
+                    nuevoVehiculo = new Colectivo(marca, modelo, patente, tipo, km, asientos);
+                    break;
+                default:
+                    System.out.println("Tipo no reconocido.");
+            }
+
+            if (nuevoVehiculo != null) {
+                listadoVehiculos.add(nuevoVehiculo);
+                System.out.println("Vehículo creado y registrado con éxito.");
+            }
+
+        } catch (PatenteInvalidaException e) {
+            System.err.println("Error de Registro: " + e.getMessage());
+        } catch (NumberFormatException e) {
+             System.err.println("Error de Entrada: Debe ingresar un número para el Modelo/Kilometraje/Tipo.");
+        } 
+        [cite_start]// Bloque finally (obligatorio) [cite: 25]
+        finally {
+            System.out.println("--- Fin de la operación de Creación ---\n");
+        }
+    }
+
+    /**
+     * Método 2: Buscar un vehículo por patente (implementación recursiva).
+     * @param patente La patente a buscar.
+     * @return El objeto Vehiculo encontrado, o null si no existe.
+     */
+    [cite_start]public static Vehiculo buscarVehiculo(String patente) { // [cite: 10]
+        return buscarVehiculoRecursivo(patente.toUpperCase(), 0); // Inicia la recursión
+    }
+    
+    /**
+     * [cite_start]Función recursiva para buscar un vehículo en el ArrayList [cite: 12]
+     * @param patente La patente a buscar (en mayúsculas)
+     * @param indice El índice actual en la lista.
+     * @return El vehículo encontrado o null.
+     */
+    [cite_start]private static Vehiculo buscarVehiculoRecursivo(String patente, int indice) { // [cite: 14]
+        // Caso base 1: El índice ha superado el tamaño de la lista, no se encontró.
+        if (indice >= listadoVehiculos.size()) {
+            return null;
+        }
+
+        Vehiculo actual = listadoVehiculos.get(indice);
+        // Caso base 2: Se encontró el vehículo. Se usa equals() redefinido.
+        [cite_start]if (actual.getPatente().equals(patente)) { // [cite: 18]
+            return actual;
+        }
+
+        [cite_start]// Paso recursivo: Llamar a la función con el siguiente índice. [cite: 16]
+        return buscarVehiculoRecursivo(patente, indice + 1);
+    }
+    
+    /**
+     * Método 3: Muestra todos los vehículos y usa Interfaces Lambdas.
+     */
+    [cite_start]public static void mostrarVehiculos() { // [cite: 10]
+        if (listadoVehiculos.isEmpty()) {
+            System.out.println("\nNo hay vehículos registrados.");
+            return;
+        }
+
+        System.out.println("\n--- LISTADO COMPLETO DE VEHÍCULOS ---");
+        [cite_start]// Lambda 1: forEach para iterar e imprimir [cite: 21]
+        listadoVehiculos.forEach(v -> {
+            System.out.printf("Tipo %d - Patente: %s | Marca: %s | KM: %d\n", 
+                               [cite_start]v.getTipo(), v.getPatente(), v.getMarca(), v.getKilometraje()); // printf [cite: 17]
+        });
+
+        System.out.println("\n--- VEHÍCULOS CON BAJO KILOMETRAJE (<= 1000) ---");
+        [cite_start]// Lambda 2: filter para obtener un subconjunto [cite: 21]
+        listadoVehiculos.stream()
+            .filter(v -> v.getKilometraje() <= 1000)
+            .collect(Collectors.toList())
+            .forEach(v -> v.mostrarDetalle("  [Bajo KM]"));
+    }
+    
+    /**
+     * Método 4: Modifica el kilometraje de un vehículo existente.
+     * Demuestra Paso por Referencia.
+     */
+    [cite_start]public static void actualizarVehiculo() { // [cite: 10]
+        System.out.println("\n--- ACTUALIZAR KILOMETRAJE ---");
+        System.out.print("Ingrese Patente del vehículo a modificar: ");
+        String patente = scanner.nextLine();
+        
+        // Buscar el vehículo
+        Vehiculo vehiculoModificar = buscarVehiculo(patente);
+        
+        [cite_start]// Uso de if/else if/else [cite: 17]
+        if (vehiculoModificar == null) {
+            System.out.println("Vehículo no encontrado.");
+        } else {
+            [cite_start]// El objeto se modifica directamente aquí (Paso por Referencia) [cite: 12]
+            System.out.printf("Vehículo encontrado: %s - KM actual: %d\n", 
+                              vehiculoModificar.getPatente(), vehiculoModificar.getKilometraje());
+            System.out.print("Ingrese NUEVO Kilometraje: ");
+            int nuevoKm = Integer.parseInt(scanner.nextLine());
+            
+            vehiculoModificar.setKilometraje(nuevoKm);
+            System.out.printf("¡Kilometraje actualizado a %d con éxito! (length(): %d)\n", 
+                              vehiculoModificar.getKilometraje(), patente.length()); [cite_start]// length() [cite: 18]
+        }
+    }
+    
+    /**
+     * Método 5: Elimina un vehículo por patente.
+     */
+    [cite_start]public static void eliminarVehiculo() { // [cite: 10]
+        System.out.println("\n--- ELIMINAR VEHÍCULO ---");
+        System.out.print("Ingrese Patente del vehículo a eliminar: ");
+        String patente = scanner.nextLine().toUpperCase(); [cite_start]// [cite: 18]
+        
+        // Creamos un Vehiculo temporal para usar el equals() redefinido
+        Vehiculo vEliminar = new Vehiculo("", 0, patente, 0, 0); 
+        
+        [cite_start]// Uso de while para el intento de eliminación [cite: 17]
+        boolean eliminado = false;
+        while (!eliminado) {
+            [cite_start]// Se usa el método remove(Object) que invoca a equals() [cite: 18]
+            if (listadoVehiculos.remove(vEliminar)) {
+                System.out.println("Vehículo con patente " + patente + " eliminado.");
+                eliminado = true;
+            } else {
+                System.out.println("Vehículo no encontrado. Verifique la patente.");
+                break; [cite_start]// break [cite: 17]
+            }
+        }
+    }
+
+    // ==============================================================================
+    // Método Principal (main)
+    // ==============================================================================
+
+    public static void main(String[] args) {
+        // Inicialización de datos de prueba para facilitar el testeo
+        listadoVehiculos.add(new Auto("Ford", 2020, "AA100A", 1, 500, 4));
+        listadoVehiculos.add(new Moto("Honda", 2023, "AB200B", 2, 12000));
+        listadoVehiculos.add(new Colectivo("Volvo", 2019, "CC300C", 3, 250000, 40));
+
+        [cite_start]// Ciclo for para calcular el costo total de mantenimiento inicial [cite: 17]
+        double costoTotal = 0;
+        for (int i = 0; i < listadoVehiculos.size(); i++) {
+            costoTotal += listadoVehiculos.get(i).calcularCostoMantenimiento();
+        }
+        System.out.printf("Costo Total de Mantenimiento Inicial de la Flota: $%.2f\n", costoTotal);
+
+
+        int opcion;
+        
+        [cite_start]// Ciclo while para mantener el menú hasta que el usuario decida salir [cite: 17]
+        while (true) {
+            System.out.println("\n\n=== SISTEMA DE ADMINISTRACIÓN DE FLOTA ===");
+            System.out.println("1. Crear Vehículo");
+            System.out.println("2. Mostrar Vehículos");
+            System.out.println("3. Actualizar Kilometraje");
+            System.out.println("4. Eliminar Vehículo");
+            System.out.println("0. Salir");
+            System.out.print(">> Elija una opción: ");
+
+            try {
+                // Validación simple de la opción ingresada
+                opcion = Integer.parseInt(scanner.nextLine());
+            } catch (NumberFormatException e) {
+                System.out.println("Error: Ingrese un número válido.");
+                continue; [cite_start]// continue [cite: 17]
+            }
+            
+            [cite_start]// Uso de if/else if/else [cite: 17]
+            if (opcion == 0) {
+                System.out.println("Saliendo del sistema. ¡Hasta pronto!");
+                break; [cite_start]// break [cite: 17]
+            } else if (opcion == 1) {
+                crearVehiculo();
+            } else if (opcion == 2) {
+                mostrarVehiculos();
+            } else if (opcion == 3) {
+                actualizarVehiculo();
+            } else if (opcion == 4) {
+                eliminarVehiculo();
+            } else {
+                System.out.println("Opción no válida. Intente de nuevo.");
+            }
+        }
+    }
+}
+
